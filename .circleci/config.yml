@@ -1,0 +1,48 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@5.2.0
+
+jobs:
+  checkoutEtTests:
+    executor:
+      name: node/default
+    steps:
+      - run: git clone https://github.com/RobinssonHerrera/Backend_Labo02.git
+      - run: cd Backend_Labo02 && npm install
+      - run: cd Backend_Labo02 && npm test
+
+  integrationFrontend:
+    executor:
+      name: node/default
+    steps:
+      - run: git clone https://github.com/RobinssonHerrera/Frontend_Labo02.git
+      - run: git clone https://github.com/RobinssonHerrera/Backend_Labo02.git
+      - run: cd Frontend_Labo02 && npm install
+      - run: cd Frontend_Labo02 && npm run build
+      - run: mkdir -p Backend_Labo02/public
+      - run: cp -rT Frontend_Labo02/build/ Backend_Labo02/public/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - Backend_Labo02
+
+  deploiement:
+    executor:
+      name: node/default
+    steps:
+      - attach_workspace:
+          at: .
+      - run: cd Backend_Labo02 && ls -Rl
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - checkoutEtTests
+      - integrationFrontend:
+          requires:
+            - checkoutEtTests
+      - deploiement:
+          requires:
+            - integrationFrontend
